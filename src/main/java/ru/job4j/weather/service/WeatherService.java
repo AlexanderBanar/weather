@@ -5,10 +5,10 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import ru.job4j.weather.model.Weather;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Comparator;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 @Service
 public class WeatherService {
@@ -32,22 +32,14 @@ public class WeatherService {
     }
 
     public Mono<Weather> getHottest() {
-        Weather hottestWeather = new Weather(0, "no city found", -273);
-        for (Weather weather : weathers.values()) {
-            if (weather.getTemperature() > hottestWeather.getTemperature()) {
-                hottestWeather = weather;
-            }
-        }
-        return Mono.just(hottestWeather);
+        return Mono.just(weathers.values().stream()
+                .max(Comparator.comparingInt(Weather::getTemperature))
+                .orElse(new Weather(0, "no city found", 0)));
     }
 
     public Flux<Weather> getCitiesGreaterThan(Integer temp) {
-        List<Weather> weatherList = new ArrayList<>();
-        for (Weather weather : weathers.values()) {
-            if (weather.getTemperature() > temp) {
-                weatherList.add(weather);
-            }
-        }
-        return Flux.fromIterable(weatherList);
+        return Flux.fromIterable(weathers.values().stream()
+                .filter(x -> x.getTemperature() > temp)
+                .collect(Collectors.toList()));
     }
 }
